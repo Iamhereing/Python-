@@ -1,7 +1,7 @@
 class Settings():
     """储存《外星人入侵》所有设置的类"""
 
-    def __index__(self):
+    def __init__(self):
         """初始化游戏的设置"""
         #屏幕设置
         self.screen_width = 1200
