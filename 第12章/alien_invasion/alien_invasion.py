@@ -26,7 +26,6 @@ def run_game():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
-
             else:
                 #每次循环时都重绘屏幕
                 screen.fill(ai_settings.bg_color)
