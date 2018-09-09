@@ -14,7 +14,7 @@ def run_game():
     pygame.display.set_caption("Alien Invasion")
 
     #设置背景色
-    bg_color = (230,230,230)
+    # bg_color = (230,230,230)
 
     # 创建一艘飞船
     ship = Ship(screen)
@@ -26,7 +26,6 @@ def run_game():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
-
             else:
                 #每次循环时都重绘屏幕
                 screen.fill(ai_settings.bg_color)
