@@ -3,6 +3,7 @@ import sys
 import pygame
 
 from bullet import Bullet
+from alien import Alien
 
 def check_keydown_events(event, ai_settings, screen, ship, bullets): # 定义按键的函数
     if event.key == pygame.K_LEFT:  # 当按左键时
@@ -11,7 +12,10 @@ def check_keydown_events(event, ai_settings, screen, ship, bullets): # 定义按
         ship.moving_right = True  # 将初始状态False转为True，坐标向右移动一个单位
 
     elif event.key == pygame.K_SPACE: # 当按空格键时
-        fire_bullet(ai_settings, screen, ship, bullets)
+        fire_bullet(ai_settings, screen, ship, bullets) # 开火，即发射子弹
+
+    elif event.key == pygame.K_q: # 当按下q键时
+        sys.exit() # 退出游戏
 
 def fire_bullet(ai_settings, screen, ship, bullets):
     if len(bullets) < ai_settings.bullets_allowed:  # 如果子弹的个数小于允许子弹的个数
@@ -35,11 +39,12 @@ def check_events(ai_settings, screen, ship, bullets): # 响应事件的函数
         elif event.type == pygame.KEYUP: # 松开按键的情况
             check_keyup_events(event, ship)
 
-def update_screen(ai_settings, screen, ship, bullets): # 刷新屏幕的函数
+def update_screen(ai_settings, screen, ship, aliens, bullets): # 刷新屏幕的函数
     screen.fill(ai_settings.bg_color)  # 每次循环时都重绘屏幕,即矢量图形的背景颜色
     for bullet in bullets.sprites(): # 发射子弹组的每一个子弹
         bullet.draw_bullet() # 绘制子弹
     ship.blitme()  # 将飞船加载在屏幕，确保出现在背景前面
+    aliens.draw(screen) # 将外星人加载在屏幕
 
     pygame.display.flip()  # 命令Pygame让最近绘制的屏幕可见。
     # 在这里，它在每次执行while循环时都绘制一个空屏幕，并擦
@@ -53,5 +58,42 @@ def update_bullets(bullets):
     for bullet in bullets.copy():  # 方法copy()是设置for循环的，从而能够在循环中修改bullets
         if bullet.rect.bottom <= 0:  # 如果子弹矩形的地步小于等于0,即子弹顶部离开屏幕顶部
             bullets.remove(bullet)  # 从子弹组中删除这颗子弹
+
+def get_number_aliens_x(ai_settings, alien_width): # 计算可容纳外星人的个数
+    available_space_x = ai_settings.screen_width - 2 * alien_width  # 可允许
+    # 外星人的个数的宽度=屏幕宽度-2×外星人宽度（边距为一个外星人的宽度）
+    number_aliens_x = int(available_space_x / (2 * alien_width))  # 外星人的个数=
+    # 可允许外星人个数/2外星人宽度（外星人之间的间距为一个外星人宽度）
+    return number_aliens_x
+
+def get_number_rows(ai_settings, ship_height, alien_height): # 计算屏幕可容纳多少行外星人
+    available_space_y = (ai_settings.screen_height - (3 * alien_height)
+                         -ship_height) # 可容纳的空间高度=屏幕的高度-上边距
+                                                      # -第一行外星人高度及间距-飞船高度
+    number_rows = int(available_space_y / (2 * alien_height)) # 外星人行数
+                                               # = 可容纳的空间高度 / 外星人高度及行距
+    return number_rows # 返回可容纳外星人的行数
+
+def create_alien(ai_settings, screen, aliens, alien_number, row_number): # 定义一行外星人
+    alien = Alien(ai_settings, screen)  # 导入设置好的外星人的类
+    alien_width = alien.rect.width  # 外星人的宽度等于外星人图片矩形的宽度
+    alien.x = alien_width + 2 * alien_width * alien_number
+    alien.rect.x = alien.x  # 一行外星人的X值=
+    # 左边边距+（一个外星人+其间距）×外星人个数
+    alien.rect.y = alien.rect.height + 2 * alien.rect.height * row_number
+    # 一列外星人的Y值=第一行外星人的高度+剩下外星人的高度及间距×一列的个数
+    aliens.add(alien)  # 将每个新创建的外星人都添加到编组aliens中
+
+def create_fleet(ai_settings, screen, ship, aliens): # 创建外星人群
+    alien = Alien(ai_settings, screen) # 导入设置好的外星人的类
+    number_aliens_x = get_number_aliens_x(ai_settings, alien.rect.width)
+    number_rows = get_number_rows(ai_settings, ship.rect.height, alien.rect.height)
+
+    for row_number in range(number_rows):
+        for alien_number in range(number_aliens_x):  # 循环每一个外星人，即加载第一行外星人
+            create_alien(ai_settings, screen, aliens, alien_number, row_number)
+
+
+
 
 
