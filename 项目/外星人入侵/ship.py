@@ -29,3 +29,6 @@ class Ship(): # 关于飞船设置的类
 
     def blitme(self):
         self.screen.blit(self.image, self.rect) # 通过方法blitme()，将飞船图像加载到self.rect指定的位置上
+
+    def center_ship(self):
+        self.center = self.screen_rect.centerx # 让飞船在屏幕上居中
