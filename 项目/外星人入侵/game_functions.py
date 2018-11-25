@@ -40,12 +40,14 @@ def check_events(ai_settings, screen, ship, bullets): # 响应事件的函数
         elif event.type == pygame.KEYUP: # 松开按键的情况
             check_keyup_events(event, ship)
 
-def update_screen(ai_settings, screen, ship, aliens, bullets): # 刷新屏幕的函数
+def update_screen(ai_settings, screen, stats, ship, aliens, bullets, play_button): # 刷新屏幕的函数
     screen.fill(ai_settings.bg_color)  # 每次循环时都重绘屏幕,即矢量图形的背景颜色
     for bullet in bullets.sprites(): # 发射子弹组的每一个子弹
         bullet.draw_bullet() # 绘制子弹
     ship.blitme()  # 将飞船加载在屏幕，确保出现在背景前面
     aliens.draw(screen) # 将外星人加载在屏幕
+    if not stats.game_active:
+        play_button.draw_button()
 
     pygame.display.flip()  # 命令Pygame让最近绘制的屏幕可见。
     # 在这里，它在每次执行while循环时都绘制一个空屏幕，并擦
