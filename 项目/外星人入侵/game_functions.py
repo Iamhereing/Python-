@@ -29,7 +29,7 @@ def check_keyup_events(event, ship): # 定义松键的函数
     if event.key == pygame.K_RIGHT:  # 当按右键时
         ship.moving_right = False  # 初始状态False,坐标不动
 
-def check_events(ai_settings, screen, ship, bullets): # 响应事件的函数
+def check_events(ai_settings, screen, stats, sb, play_button, ship, aliens, bullets): # 响应事件的函数
     for event in pygame.event.get():  # 事件循环，事件就是用户玩游戏时执行的操作，如按键或移动鼠标
         if event.type == pygame.QUIT:  # 如果事件类型是游戏退出
             sys.exit()  # 调用该模块来退出游戏
@@ -40,12 +40,39 @@ def check_events(ai_settings, screen, ship, bullets): # 响应事件的函数
         elif event.type == pygame.KEYUP: # 松开按键的情况
             check_keyup_events(event, ship)
 
-def update_screen(ai_settings, screen, stats, ship, aliens, bullets, play_button): # 刷新屏幕的函数
+        elif event.type == pygame.MOUSEBUTTONDOWN: # 当鼠标发生点击时
+            mouse_x, mouse_y = pygame.mouse.get_pos() # 获取鼠标点击的位置
+            check_play_button(ai_settings, screen, stats, sb, play_button, ship, aliens, bullets, mouse_x, mouse_y) # 放入这个函数中
+
+def check_play_button(ai_settings, screen, stats, sb, play_button,ship,
+                      aliens, bullets,  mouse_x, mouse_y):
+    button_clicked = play_button.rect.collidepoint(mouse_x, mouse_y) # 定义鼠标在按钮矩形框内这个事件
+    if button_clicked and not stats.game_active: # 如果鼠标在按钮上并且游戏处于非活动状态
+        ai_settings.initialize_dynamic_settings()
+
+        pygame.mouse.set_visible(False)  # 隐藏光标
+        if play_button.rect.collidepoint(mouse_x, mouse_y):  # collidepoint（）检查鼠标点击位置是否在按钮内
+            stats.reset_stats()  # 重置游戏统计信息
+            stats.game_active = True  # 如果是，则激活游戏状态
+
+            sb.prep_score() # 重置分数
+            sb.prep_high_score() # 重置最高分数
+            sb.prep_level() # 重置等级
+            sb.prep_ships() # 重置飞船
+
+            aliens.empty() # 外星人清空
+            bullets.empty() # 子弹清空
+
+            create_fleet(ai_settings, screen, ship, aliens) #新增外星人群
+            ship.center_ship() # 在屏幕底部中央添置飞船
+
+def update_screen(ai_settings, screen, stats, sb, ship, aliens, bullets, play_button): # 刷新屏幕的函数
     screen.fill(ai_settings.bg_color)  # 每次循环时都重绘屏幕,即矢量图形的背景颜色
     for bullet in bullets.sprites(): # 发射子弹组的每一个子弹
         bullet.draw_bullet() # 绘制子弹
     ship.blitme()  # 将飞船加载在屏幕，确保出现在背景前面
     aliens.draw(screen) # 将外星人加载在屏幕
+    sb.show_score()
     if not stats.game_active:
         play_button.draw_button()
 
@@ -55,22 +82,35 @@ def update_screen(ai_settings, screen, stats, ship, aliens, bullets, play_button
     # pygame.display.flip（）将不断更新屏幕，以显示元素的的新
     # 位置，并在原来的位置隐藏元素，从而营造平滑移动的效果
 
-def update_bullets(ai_settings, screen, ship, aliens, bullets):
+def update_bullets(ai_settings, screen, stats, sb, ship, aliens, bullets):
     bullets.update()
 
     for bullet in bullets.copy():  # 方法copy()是设置for循环的，从而能够在循环中修改bullets
         if bullet.rect.bottom <= 0:  # 如果子弹矩形的地步小于等于0,即子弹顶部离开屏幕顶部
             bullets.remove(bullet)  # 从子弹组中删除这颗子弹
-    check_bullet_alien_collisions(ai_settings, screen, ship, aliens, bullets)
+    check_bullet_alien_collisions(ai_settings, screen, stats, sb, ship, aliens, bullets)
 
-def check_bullet_alien_collisions(ai_settings, screen, ship, aliens, bullets):
+def check_bullet_alien_collisions(ai_settings, screen, stats, sb, ship, aliens, bullets):
     collisions = pygame.sprite.groupcollide(bullets, aliens, True, True)
     # 方法sprite.groupcollide()将子弹矩形与外星人矩形进行比较，
     # 并返回一个字典。字典K：子弹 V：被击中的外星人，两个True
     # 代表删除发生碰撞的子弹和外星人
 
+    if collisions:
+        for aliens in collisions.values():
+            stats.score += ai_settings.alien_points
+            # 有子弹撞击外星人时，Pygame返回一个字典（collisions）。
+            # 我们检查这个字典是否存在，如果存在，就将得分加上一个外星人值的点数
+            sb.prep_score()  # 创建新得分图像
+        check_high_score(stats, sb)  # 载入最高分
+
     if len(aliens) == 0: # 如果外星人被打完了
         bullets.empty() # 删除所有的子弹
+        ai_settings.increase_speed()
+
+        stats.level += 1  # 提高等级
+        sb.prep_level()  # 重新加载等级
+
         create_fleet(ai_settings, screen, ship, aliens) # 再添加一群外星人
 
 def get_number_aliens_x(ai_settings, alien_width): # 计算可容纳外星人的个数
@@ -118,9 +158,11 @@ def change_fleet_direction(ai_settings, aliens):
         alien.rect.y += ai_settings.fleet_drop_speed # 外星人向下移动初始设置单位
     ai_settings.fleet_direction *= -1 # 向左移动
 
-def ship_hit(ai_settings, stats, screen, ship, aliens, bullets): # 定义被撞到的飞船
+def ship_hit(ai_settings, screen,stats, sb, ship, aliens, bullets): # 定义被撞到的飞船
     if stats.ships_left > 0:
         stats.ships_left -= 1  # 当被撞时储存的飞船数量减1
+
+        sb.prep_ships() # 重置飞船
 
         aliens.empty()  # 外星人清空
         bullets.empty()  # 子弹清空
@@ -132,27 +174,33 @@ def ship_hit(ai_settings, stats, screen, ship, aliens, bullets): # 定义被撞�
 
     else:
         stats.game_active = False
+        pygame.mouse.set_visible(True)
 
-def check_aliens_bottom(ai_settings, stats, screen, ship, aliens, bullets):
+def check_aliens_bottom(ai_settings, screen, stats, sb, ship, aliens, bullets):
     # 定义外星人触碰到屏幕底部的函数
     screen_rect = screen.get_rect()
     for alien in aliens.sprites():
         if alien.rect.bottom >= screen_rect.bottom:
-            ship_hit(ai_settings, stats, screen, ship, aliens, bullets)
+            ship_hit(ai_settings, screen, stats, sb, ship, aliens, bullets)
             break
 
-def update_aliens(ai_settings, stats, screen, ship, aliens, bullets): # 更新外星人群的类
+def update_aliens(ai_settings, screen,stats, sb, ship, aliens, bullets): # 更新外星人群的类
     check_fleet_edges(ai_settings, aliens)
     aliens.update()
 
     if pygame.sprite.spritecollideany(ship, aliens):
-        ship_hit(ai_settings, stats, screen, ship, aliens, bullets)
+        ship_hit(ai_settings, screen, stats, sb, ship, aliens, bullets)
     # 方法spritecollideany（）接受两个实参：一个精灵和一个编组。
     # 它检查编组是否有成员与精灵发生了碰撞，并在找到与精灵发生
     # 了碰撞后的成员后就停止遍历编组。在此处，它遍历编组aliens，
     # 并返回它找到的的第一个与飞船发生碰撞的外星人。如果发生
     # 碰撞，执行ship_hit的操作
-    check_aliens_bottom(ai_settings, stats, screen, ship, aliens, bullets)
+    check_aliens_bottom(ai_settings, screen, stats, sb, ship, aliens, bullets)
+
+def check_high_score(stats, sb):
+    if stats.score > stats.high_score:
+        stats.high_score = stats.score
+        sb.prep_high_score()
 
 
 

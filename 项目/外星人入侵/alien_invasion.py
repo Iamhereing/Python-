@@ -4,6 +4,7 @@ import pygame
 
 from settings import Settings
 from game_stats import GameStats
+from scoreboard import Scoreboard
 from button import Button
 from ship import Ship
 from alien import Alien
@@ -19,6 +20,7 @@ def run_game(): # 初始化游戏并创建一个屏幕对象
 
     play_button = Button(ai_settings, screen, "Play")  # 添加Play的按钮
     stats = GameStats(ai_settings)  # 创建一个用于存储游戏统计信息的实例
+    sb = Scoreboard(ai_settings, screen, stats)
     ship = Ship(ai_settings,screen) # 创建一艘飞船
     bullets = Group() # 创建一个用于存储子弹的编组
     aliens = Group() # 创建一个用于存储外星人的编组
@@ -27,13 +29,13 @@ def run_game(): # 初始化游戏并创建一个屏幕对象
 
     while True: # 开始游戏的主循环
 
-        gf.check_events(ai_settings, screen, ship, bullets) # 响应事件的函数
+        gf.check_events(ai_settings, screen, stats, sb, play_button, ship, aliens, bullets) # 响应事件的函数
         if stats.game_active:
             ship.update()  # 飞船的按键控制情况
-            gf.update_bullets(ai_settings, screen, ship, aliens, bullets)  # 更新外星人和子弹的情况
-            gf.update_aliens(ai_settings, stats, screen, ship, aliens, bullets)  # 更新外星人群
+            gf.update_bullets(ai_settings, screen, stats, sb, ship, aliens, bullets)  # 更新外星人和子弹的情况
+            gf.update_aliens(ai_settings, screen, stats, sb, ship, aliens, bullets)  # 更新外星人群
 
-        gf.update_screen(ai_settings, screen, stats, ship, aliens, bullets, play_button) # 矢量图形
+        gf.update_screen(ai_settings, screen, stats, sb, ship, aliens, bullets, play_button) # 矢量图形
                                              # 的基本设置， 屏幕， 飞船,子弹，外星人
 
 

@@ -1,8 +1,10 @@
 import pygame
+from pygame.sprite import Sprite
 
-class Ship(): # 关于飞船设置的类
+class Ship(Sprite): # 关于飞船设置的类
 
     def __init__(self, ai_settings, screen): #设置初始位置
+        super(Ship, self).__init__()
         self.screen = screen
         self.ai_settings = ai_settings
 
