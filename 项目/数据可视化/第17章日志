@@ -1,0 +1,48 @@
+这两天回家了一趟，照顾小奶狗，所以代码量很少
+但是还是完成了这周的任务
+
+本章是使用API即（Wbe应用编程接口
+这章还好比较容易理解，结合了这本书的知识，通过URL下载数据，然后整理成列表通过Pygal可视化将其制作图表。。。突然发现自己挨着编程的边了，那些做数据处理的就是这么做的
+
+然后操作方法差不多知道了，利用requests库
+我突然想起之前的爬百度LOGO的图片，于是按照自己学的只是打，不多因为书上处理的文本，所以用的是json，和text，所以导致我没爬下来，再回头看之前的代码，原来图片保存的格式是png，写入是时候不是json，而是content，然后就成功啦。所有这本书学完后我要开始好好看看和学习那本爬虫书啦
+
+然后本周我要学习这本书的最后一个项目啦，《Web应用程序》！！加油明后天第18章《Django入门》
+
+然后就是我的有个文件有问题，代码是：
+import requests
+
+from operator import itemgetter
+
+url = 'https://hacker-news.firebaseio.com/v0/topstories.json'
+r = requests.get(url)
+print("Status code:", r.status_code)
+
+submission_ids = r.json()
+submission_dicts = []
+for submission_id in submission_ids[:30]:
+    url = ('https://hacker-news.firebaseio.com/v0/item/' + str(submission_id)
+            + '.json')
+    submission_r = requests.get(url)
+    print(submission_r.status_code)
+    response_dict = submission_r.json()
+
+    submission_dict = {
+        'title': response_dict['title'],
+        'link': 'http://news.ycombinator.com/item?id=' + str(submission_id),
+        'comments': response_dict.get('descendants', 0)
+    }
+    submission_dicts.append(submission_dict)
+
+submission_dicts = sorted(submission_dicts, key=itemgetter('comments'),
+                          reverse=True)
+
+for submission_dict in submission_dicts:
+    print("\nTitle:", submission_dict['title'])
+    print("Discussion link:", submission_dict['link'])
+    print("Comments:", submission_dict['comments'])
+
+最后一行是：
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='hacker-news.firebaseio.com', port=443): Max retries exceeded with url: /v0/topstories.json (Caused by NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x7f93c6c95c18>: Failed to establish a new connection: [Errno 101] Network is unreachable'))
+
+帮忙看看啥原因
